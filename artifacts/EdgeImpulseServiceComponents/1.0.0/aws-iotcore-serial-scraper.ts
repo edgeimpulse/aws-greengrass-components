@@ -2,6 +2,8 @@ const { spawn } = require('child_process');
 import { AWSIoTCoreConnector } from "./aws-iotcore-connector"
 import { v4 as uuidv4 } from 'uuid';
 
+let totalInferenceCount = 0;
+
 async function do_scrape_box(cmd: string, args: [], aws_iot : AWSIoTCoreConnector) {
     let t_str_inf = "";
 
@@ -48,6 +50,9 @@ async function do_scrape_box(cmd: string, args: [], aws_iot : AWSIoTCoreConnecto
                         inf_json["box"][0] = inf_box_0;
                         inf_json["id"] = uuidv4();
                         inf_json["ts"] = Date.now();
+                        inf_json["inference_count"] = inf_box_0.length;
+                        totalInferenceCount += inf_box_0.length; 
+                        inf_json["total_inferences"] += totalInferenceCount;
                         
                         // send to AWS IoTCore
                         console.log("inference: " +  JSON.stringify(inf_json));
