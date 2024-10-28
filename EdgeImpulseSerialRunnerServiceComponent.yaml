@@ -1,0 +1,47 @@
+---
+RecipeFormatVersion: '2020-01-25'
+ComponentName: EdgeImpulseSerialRunnerServiceComponent 
+ComponentVersion: '1.0.0'
+ComponentDescription: 'Service Installer for Edge Impulse Serial Runner service'
+ComponentPublisher: EdgeImpulse
+ComponentConfiguration:
+  DefaultConfiguration:
+    Parameters: {
+      "node_version": "20.12.1",
+      "device_name": "MyEdgeImpulseDevice",
+      "sleep_time_sec": 10,
+      "lock_filename": "/tmp/ei_lockfile_serial_runner",
+      "iotcore_backoff": "5",
+      "iotcore_qos": "1",
+      "ei_bindir": "/usr/local/bin",
+      "ei_ggc_user_groups": "video audio input users dialout"
+    }
+Manifests:
+  - Platform:
+      os: all
+    Lifecycle:
+      setenv: {
+              "CONFIG_PARAMETERS": "{configuration:/Parameters}"
+              }
+      install: 
+        RequiresPrivilege: true
+        Timeout: 9000
+        script: |-
+          chmod 755 {artifacts:path}/install_serial.sh {artifacts:path}/run_serial.sh {artifacts:path}/launch_serial.sh {artifacts:path}/stop.sh {artifacts:path}/parser.sh
+          /bin/bash {artifacts:path}/install_serial.sh {artifacts:path} {configuration:/Parameters/node_version} {configuration:/Parameters/ei_ggc_user_groups}
+      run:
+        script: |- 
+          /bin/bash {artifacts:path}/run_serial.sh {artifacts:path} {configuration:/Parameters/device_name} {configuration:/Parameters/sleep_time_sec} {configuration:/Parameters/lock_filename} {configuration:/Parameters/iotcore_backoff} {configuration:/Parameters/iotcore_qos} {configuration:/Parameters/ei_bindir}
+      shutdown:
+        RequiresPrivilege: true
+        script: |-
+          /bin/bash {artifacts:path}/stop.sh {artifacts:path} {configuration:/Parameters/lock_filename} 
+    Artifacts:
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/aws-iotcore-connector.ts
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/aws-iotcore-serial-scraper.ts
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/package.json
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/install_serial.sh
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/run_serial.sh
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/launch_serial.sh
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/stop.sh
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/parser.sh

@@ -1,0 +1,53 @@
+---
+RecipeFormatVersion: '2020-01-25'
+ComponentName: EdgeImpulseLinuxRunnerServiceComponent 
+ComponentVersion: '1.0.0'
+ComponentDescription: 'Service Installer for Edge Impulse Linux Runner service'
+ComponentPublisher: EdgeImpulse
+ComponentConfiguration:
+  DefaultConfiguration:
+    Parameters: {
+      "node_version": "20.12.1",
+      "vips_version": "8.12.1",
+      "device_name": "MyEdgeImpulseDevice",
+      "launch": "runner",
+      "sleep_time_sec": 10,
+      "lock_filename": "/tmp/ei_lockfile_runner",
+      "gst_args": "__none__",
+      "eiparams": "--greengrass",
+      "iotcore_backoff": "5",
+      "iotcore_qos": "1",
+      "ei_bindir": "/usr/local/bin",
+      "ei_sm_secret_id": "EI_API_KEY",
+      "ei_sm_secret_name": "ei_api_key",
+      "ei_poll_sleeptime_ms": 2500,
+      "ei_local_model_file": "__none__",
+      "ei_shutdown_behavior": "__none__",
+      "ei_ggc_user_groups": "video audio input users",
+      "install_kvssink": "no"
+    }
+Manifests:
+  - Platform:
+      os: all
+    Lifecycle:
+      setenv: {
+              "CONFIG_PARAMETERS": "{configuration:/Parameters}"
+              }
+      install: 
+        RequiresPrivilege: true
+        Timeout: 9000
+        script: |-
+          chmod 755 {artifacts:path}/install.sh {artifacts:path}/run.sh {artifacts:path}/launch.sh {artifacts:path}/stop.sh
+          /bin/bash {artifacts:path}/install.sh {artifacts:path} {configuration:/Parameters/node_version} {configuration:/Parameters/vips_version} {configuration:/Parameters/install_kvssink} {configuration:/Parameters/ei_ggc_user_groups}
+      run:
+        script: |- 
+          /bin/bash {artifacts:path}/run.sh {artifacts:path} {configuration:/Parameters/device_name} {configuration:/Parameters/launch} {configuration:/Parameters/sleep_time_sec} {configuration:/Parameters/lock_filename} {configuration:/Parameters/gst_args} {configuration:/Parameters/iotcore_backoff} {configuration:/Parameters/iotcore_qos} {configuration:/Parameters/ei_bindir} {configuration:/Parameters/ei_sm_secret_id} {configuration:/Parameters/ei_sm_secret_name} {configuration:/Parameters/ei_poll_sleeptime_ms} {configuration:/Parameters/ei_local_model_file} {configuration:/Parameters/ei_shutdown_behavior} {configuration:/Parameters/eiparams}
+      shutdown:
+        RequiresPrivilege: true
+        script: |-
+          /bin/bash {artifacts:path}/stop.sh {artifacts:path} {configuration:/Parameters/lock_filename} 
+    Artifacts:
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/install.sh
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/run.sh
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/launch.sh
+      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/stop.sh
