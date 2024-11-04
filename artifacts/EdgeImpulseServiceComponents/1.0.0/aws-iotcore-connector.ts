@@ -143,7 +143,7 @@ export class AWSIoTCoreConnector {
     }
 
     async launchCommandReceiver() {
-        await this.listenForCommands(this._commandInputTopic,this._poolSleepTimeMS);
+        await this.listenForCommands(this._commandInputTopic, this._poolSleepTimeMS);
     }
 
     async clearRetainedQueue(cmd_topic: string) {
@@ -269,7 +269,7 @@ export class AWSIoTCoreConnector {
     async sendInference(payload: Payload, key: AwsResultKey) {
         if (this._iot !== undefined && this.isConnected() === true &&
             this._inferenceOutputTopic !== undefined && this._inferenceOutputTopic.length > 0) {
-            if (this.isEmptyInference(payload,key)) {
+            if (this.isEmptyInference(payload, key)) {
                 // empty inference ... so save money and don't publish
             }
             else {

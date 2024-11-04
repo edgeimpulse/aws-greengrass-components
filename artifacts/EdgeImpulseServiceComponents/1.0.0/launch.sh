@@ -20,7 +20,7 @@ fi
 # Is Debian, Ubuntu, Yocto?
 #
 IS_DEBIAN=`uname -v | grep Debian`
-IS_UBUNTU=`uname -v | grep Ubuntu`
+IS_UBUNTU=`uname -v | grep -E '(Ubuntu|RT)'`
 YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip)'`
 IS_AVNET_RZBOARD=`uname -a | grep -E '(rzboard)'`
 

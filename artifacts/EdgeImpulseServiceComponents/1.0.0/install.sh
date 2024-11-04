@@ -14,7 +14,7 @@ ALL=`uname -a`
 # Is Debian, Ubuntu, Yocto?
 #
 IS_DEBIAN=`uname -v | grep Debian`
-IS_UBUNTU=`uname -v | grep Ubuntu`
+IS_UBUNTU=`uname -v | grep -E '(Ubuntu|RT)'`
 YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip)'`
 IS_AVNET_RZBOARD=`uname -a | grep -E '(rzboard)'`
 
@@ -78,7 +78,16 @@ install_nodejs() {
     NODE=`which node`
     if [ ! -z "${NODE}" ]; then
         NODE_VER=`node --version`
-        echo "NodeJS ${NODE} already installed. Skipping install... OK. Version: ${NODE_VER}"
+        if [ "${NODE_VER}" != "v${NODE_VERSION}" ]; then
+            echo "Old version of NodeJS installed. Updating to v${NODE_VERSION}..." 
+            wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+            tar -xJf node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+            cd node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}
+            cp -R * /usr/local/
+            cd ..
+        else
+            echo "NodeJS ${NODE} already installed. Skipping install... OK. Version: ${NODE_VER}"
+        fi
     else 
         echo "NodeJS not installed. Installing ${NODE_VERSION}..." 
         wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
