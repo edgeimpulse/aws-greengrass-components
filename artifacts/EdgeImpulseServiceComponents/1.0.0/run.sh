@@ -21,7 +21,8 @@ EI_SM_SECRET_NAME="${11}"
 EI_POLL_SLEEPTIME_MS="${12}"
 EI_LOCAL_MODEL_FILE="${13}"
 SHUTDOWN_BEHAVIOR="${14}"
-shift 14
+PUBLISH_INFERENCE_IMAGE="${15}"
+shift 15
 EI_PARAMS="$*"
 
 EXISTS="2"
@@ -125,7 +126,7 @@ launch_linux() {
 launch_runner() {
     # Build the full parameters
     BIN="${BIN_DIR}/edge-impulse-linux-runner"
-    FULL_PARAMS="${IOTCORE_BACKOFF} ${IOTCORE_QOS} ${EI_SM_SECRET_ID} ${EI_SM_SECRET_NAME} ${EI_POLL_SLEEPTIME_MS} ${EI_LOCAL_MODEL_FILE} ${SHUTDOWN_BEHAVIOR} ${BIN} ${EI_PARAMS}"
+    FULL_PARAMS="${IOTCORE_BACKOFF} ${IOTCORE_QOS} ${EI_SM_SECRET_ID} ${EI_SM_SECRET_NAME} ${EI_POLL_SLEEPTIME_MS} ${EI_LOCAL_MODEL_FILE} ${SHUTDOWN_BEHAVIOR} ${PUBLISH_INFERENCE_IMAGE} ${BIN} ${EI_PARAMS}"
 
     # Build out the optional GST Launch args parameter if present
     export GST_LAUNCH_ARGS=""

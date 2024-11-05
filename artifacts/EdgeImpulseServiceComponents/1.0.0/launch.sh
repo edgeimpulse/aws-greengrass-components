@@ -9,7 +9,8 @@ EM_SM_SECRET_NAME=$6
 IOTCORE_SLEEPTIME_MS=$7
 EI_LOCAL_MODEL_FILE=$8
 SHUTDOWN_BEHAVIOR=$9
-shift 9
+PUBLISH_INFERENCE_IMAGE="${10}"
+shift 10
 CMD=$*
 
 if [ ! -z "${GST_LAUNCH_ARGS}" ]; then
@@ -79,6 +80,15 @@ export EI_AWS_SECRET_ID=${EI_SM_SECRET_ID}
 export EI_AWS_SECRET_NAME=${EM_SM_SECRET_NAME}
 
 #
+# Option to publish inference image along with inference (default is "no")
+#
+if [ "${PUBLISH_INFERENCE_IMAGE}" = "yes" ]; then
+    export EI_INCLUDE_BASE64_IMAGE="yes"
+else
+    export EI_INCLUDE_BASE64_IMAGE="no"
+fi
+
+#
 # Patch Ubuntu 22+ with pipewire and systemd changes
 #
 if [ ! -z "${IS_UBUNTU}" ]; then
@@ -93,6 +103,7 @@ if [ ! -z "${IS_UBUNTU}" ]; then
     echo "EI: Launch(ubuntu): XDG_RUNTIME_DIR=/run/user/$UID"
     echo "EI: Launch(ubuntu): DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/bus"
 fi
+echo "EI: Include base64 image with inference:" ${EI_INCLUDE_BASE64_IMAGE}
 
 # Yocto/TVM support
 if [ ! -z "${YOCTO}" ]; then
