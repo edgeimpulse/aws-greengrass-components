@@ -1,4 +1,5 @@
 import { IoTDataPlaneClient, PublishCommand, GetRetainedMessageCommand } from "@aws-sdk/client-iot-data-plane";
+import fs from 'fs';
 
 const PREFIX = '\x1b[34m[AWS_IOTCORE]\x1b[0m';
 
@@ -45,6 +46,8 @@ export class AWSIoTCoreConnector {
     private _delayInferences: number;
     private _poolSleepTimeMS: number;
     private _opts : any | undefined;
+    private _enableWriteToFile : string;
+    private _writeToFileDir : string;
 
     constructor(opts: {
         appName: string,
@@ -74,6 +77,10 @@ export class AWSIoTCoreConnector {
         // set "iotcore_backoff" in Greengrass component config to "n" > 0 to enable
         // countdown backoff... "-1" to disable... (default: "10")
         this._delayInferences = Number((<string>process.env.EI_OUTPUT_BACKOFF_COUNT));
+
+        // optional write to file configuration
+        this._enableWriteToFile = (<string>process.env.EI_ENABLE_WRITE_TO_FILE);
+        this._writeToFileDir = (<string>process.env.EI_FILE_WRITE_DIRECTORY);
     }
 
     createTopics() {
@@ -266,7 +273,28 @@ export class AWSIoTCoreConnector {
         }
     }
 
-    async sendInference(payload: Payload, key: AwsResultKey) {
+    async saveToFile(payload: Payload, imgAsJpg: Buffer)  {
+        // construct the filename...
+        const filenameBase = this._writeToFileDir + "/" + payload.id;
+        const imageFilename = filenameBase + ".img";
+        const infFilename = filenameBase + ".json";
+
+        // INFERENCE: write out to disk...
+        fs.writeFile(infFilename, JSON.stringify(payload), function(writeErr) {
+            if(writeErr) {
+                console.log(writeErr);
+            }
+        });
+
+        // IMAGE: write out to disk...
+        fs.writeFile(imageFilename, imgAsJpg, function(writeErr) {
+            if(writeErr) {
+                console.log(writeErr);
+            }
+        });
+    }
+
+    async sendInference(payload: Payload, key: AwsResultKey, imgAsJpg?: Buffer) {
         if (this._iot !== undefined && this.isConnected() === true &&
             this._inferenceOutputTopic !== undefined && this._inferenceOutputTopic.length > 0) {
             if (this.isEmptyInference(payload, key)) {
@@ -287,6 +315,11 @@ export class AWSIoTCoreConnector {
                                                                 qos: this._iotcoreQoS,
                                                                 payload: Buffer.from(JSON.stringify(payload))
                                                               }));
+
+                            // write to file (optional)
+                            if (this._enableWriteToFile !== undefined && this._enableWriteToFile === "yes" && imgAsJpg !== undefined) {
+                                await this.saveToFile(payload, imgAsJpg);
+                            }
                         }
                         catch(err) {
                             if (this._notSilent) {
@@ -305,6 +338,11 @@ export class AWSIoTCoreConnector {
                                                             qos: this._iotcoreQoS,
                                                             payload: Buffer.from(JSON.stringify(payload))
                                                           }));
+
+                        // write to file (optional)
+                        if (this._enableWriteToFile !== undefined && this._enableWriteToFile === "yes" && imgAsJpg !== undefined) {
+                            await this.saveToFile(payload, imgAsJpg);
+                        }
                     }
                     catch(err) {
                         if (this._notSilent) {
