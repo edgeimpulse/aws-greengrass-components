@@ -10,7 +10,9 @@ IOTCORE_SLEEPTIME_MS=$7
 EI_LOCAL_MODEL_FILE=$8
 SHUTDOWN_BEHAVIOR=$9
 PUBLISH_INFERENCE_IMAGE="${10}"
-shift 10
+ENABLE_CACHE_TO_FILE="${11}"
+CACHE_FILE_DIRECTORY="${12}"
+shift 12
 CMD=$*
 
 if [ ! -z "${GST_LAUNCH_ARGS}" ]; then
@@ -89,6 +91,27 @@ else
 fi
 
 #
+# Option to cache inference + image to file (default is "no")
+#
+if [ "${ENABLE_CACHE_TO_FILE}" = "yes" ]; then
+    export EI_ENABLE_WRITE_TO_FILE="yes"
+else
+    export EI_ENABLE_WRITE_TO_FILE="no"
+fi
+
+#
+# Option for caching if enabled
+#
+if [ "${EI_ENABLE_WRITE_TO_FILE}" = "yes" ]; then
+    if [ -d ${CACHE_FILE_DIRECTORY} ]; then
+         export EI_FILE_WRITE_DIRECTORY="${CACHE_FILE_DIRECTORY}"
+    else 
+         echo "EI: WARNING Cache Directory ${CACHE_FILE_DIRECTORY} does not exist. Disabling Cache file writes..."
+         export EI_ENABLE_WRITE_TO_FILE="no"
+    fi
+fi
+
+#
 # Patch Ubuntu 22+ with pipewire and systemd changes
 #
 if [ ! -z "${IS_UBUNTU}" ]; then
@@ -103,7 +126,11 @@ if [ ! -z "${IS_UBUNTU}" ]; then
     echo "EI: Launch(ubuntu): XDG_RUNTIME_DIR=/run/user/$UID"
     echo "EI: Launch(ubuntu): DBUS_SESSION_BUS_ADDRESS=unix:path=${XDG_RUNTIME_DIR}/bus"
 fi
-echo "EI: Include base64 image with inference:" ${EI_INCLUDE_BASE64_IMAGE}
+echo "EI: Include base64 image with inference: ${EI_INCLUDE_BASE64_IMAGE}"
+echo "EI: Image+Inference Caching Enabled: ${EI_ENABLE_WRITE_TO_FILE}"
+if [ "${EI_ENABLE_WRITE_TO_FILE}" = "yes" ]; then
+   echo "EI: Image+Inference Caching Directory: ${EI_FILE_WRITE_DIRECTORY}"
+fi
 
 # Yocto/TVM support
 if [ ! -z "${YOCTO}" ]; then
