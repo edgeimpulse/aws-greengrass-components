@@ -24,7 +24,8 @@ ComponentConfiguration:
       "ei_local_model_file": "__none__",
       "ei_shutdown_behavior": "__none__",
       "ei_ggc_user_groups": "video audio input users",
-      "install_kvssink": "no"
+      "install_kvssink": "no",
+      "publish_inference_base64_image": "no"
     }
 Manifests:
   - Platform:
@@ -41,7 +42,7 @@ Manifests:
           /bin/bash {artifacts:path}/install.sh {artifacts:path} {configuration:/Parameters/node_version} {configuration:/Parameters/vips_version} {configuration:/Parameters/install_kvssink} {configuration:/Parameters/ei_ggc_user_groups}
       run:
         script: |-
-          /bin/bash {artifacts:path}/run.sh {artifacts:path} {configuration:/Parameters/device_name} {configuration:/Parameters/launch} {configuration:/Parameters/sleep_time_sec} {configuration:/Parameters/lock_filename} {configuration:/Parameters/gst_args} {configuration:/Parameters/iotcore_backoff} {configuration:/Parameters/iotcore_qos} {configuration:/Parameters/ei_bindir} {configuration:/Parameters/ei_sm_secret_id} {configuration:/Parameters/ei_sm_secret_name}  {configuration:/Parameters/ei_poll_sleeptime_ms} {configuration:/Parameters/ei_local_model_file} {configuration:/Parameters/ei_shutdown_behavior} {configuration:/Parameters/eiparams}
+          /bin/bash {artifacts:path}/run.sh {artifacts:path} {configuration:/Parameters/device_name} {configuration:/Parameters/launch} {configuration:/Parameters/sleep_time_sec} {configuration:/Parameters/lock_filename} {configuration:/Parameters/gst_args} {configuration:/Parameters/iotcore_backoff} {configuration:/Parameters/iotcore_qos} {configuration:/Parameters/ei_bindir} {configuration:/Parameters/ei_sm_secret_id} {configuration:/Parameters/ei_sm_secret_name}  {configuration:/Parameters/ei_poll_sleeptime_ms} {configuration:/Parameters/ei_local_model_file} {configuration:/Parameters/ei_shutdown_behavior} {configuration:/Parameters/publish_inference_base64_image} {configuration:/Parameters/eiparams}
       shutdown:
         RequiresPrivilege: true
         script: |-
