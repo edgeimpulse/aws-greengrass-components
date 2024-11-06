@@ -62,7 +62,7 @@ async function do_scrape_box(cmd: string, args: [], aws_iot : AWSIoTCoreConnecto
                         if (total_time_ms > 0) {
                             time_details_json = {"DSP": dsp_time_ms, "Classification": classification_time_ms, "UOM": splits_uom};
                         }
-                        let inf_json = {"time":total_time_ms, "time_splits":{}, "box": [undefined], id: "", ts: 0, total_inferences: 0, inference_count: 0};
+                        let inf_json = {"time_ms":total_time_ms, "info":"", "id":"", "ts":0, "time_splits":{}, "box": [undefined], "total_inferences": 0, "inference_count": 0};
                         if (total_time_ms > 0) {
                             inf_json["time_splits"] = time_details_json;
                             dsp_time_ms = 0;
