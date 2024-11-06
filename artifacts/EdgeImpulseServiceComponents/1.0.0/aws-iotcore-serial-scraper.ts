@@ -2,6 +2,34 @@ const { spawn } = require('child_process');
 import { AWSIoTCoreConnector } from "./aws-iotcore-connector"
 import { v4 as uuidv4 } from 'uuid';
 
+// Payload typing
+type ClassificationResult = { [k: string]: string | number };
+type BoundingBox = {
+    label: string;
+    value: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+};
+
+type BasePayload = {
+    time_ms: number;
+    info?: string;
+    id: string;
+    ts: number;
+    inference_count: number;
+    total_inferences: number;
+};
+
+type DynamicPayload = {
+    [key in AwsResultKey]?: AwsResult;
+};
+
+export type AwsResult = ClassificationResult | BoundingBox[];
+export type AwsResultKey = 'c' | 'box' | 'grid';
+export type Payload = BasePayload & DynamicPayload;
+
 let totalInferenceCount = 0;
 
 async function do_scrape_box(cmd: string, args: [], aws_iot : AWSIoTCoreConnector) {
@@ -34,7 +62,7 @@ async function do_scrape_box(cmd: string, args: [], aws_iot : AWSIoTCoreConnecto
                         if (total_time_ms > 0) {
                             time_details_json = {"DSP": dsp_time_ms, "Classification": classification_time_ms, "UOM": splits_uom};
                         }
-                        let inf_json = {"time":total_time_ms, "time_splits":{}, "box": [undefined], id: "", ts: 0};
+                        let inf_json = {"time":total_time_ms, "time_splits":{}, "box": [undefined], id: "", ts: 0, total_inferences: 0, inference_count: 0};
                         if (total_time_ms > 0) {
                             inf_json["time_splits"] = time_details_json;
                             dsp_time_ms = 0;
@@ -56,7 +84,7 @@ async function do_scrape_box(cmd: string, args: [], aws_iot : AWSIoTCoreConnecto
                         
                         // send to AWS IoTCore
                         console.log("inference: " +  JSON.stringify(inf_json));
-                        await aws_iot.send_inference(inf_json,"box");
+                        await aws_iot.sendInference(<Payload>(inf_json),"box");
                     }
                     t_str_inf = "";
                 }
