@@ -82,6 +82,7 @@ install_nodejs() {
             echo "Old version of NodeJS installed. Updating to v${NODE_VERSION}..." 
             wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
             tar -xJf node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+            rm node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
             cd node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}
             cp -R * /usr/local/
             cd ..
@@ -92,6 +93,7 @@ install_nodejs() {
         echo "NodeJS not installed. Installing ${NODE_VERSION}..." 
         wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
         tar -xJf node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+        rm node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
         cd node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}
         cp -R * /usr/local/
         cd ..

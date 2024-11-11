@@ -165,9 +165,6 @@ install_edge_cli() {
 }
 
 install_parser() {
-    echo "Installing TS runner..."
-    npm install -g ts-node
-
     echo "Installing EI/AWS serial parser..."
     PARSER_INSTALL_DIR="/home/${GREENGRASS_SERVICEUSER}/parser"
     rm -rf ${PARSER_INSTALL_DIR} 2> /dev/null

@@ -4,6 +4,7 @@
   "description": "Edge Impulse Serial inferencing scraper into AWS IoTCore",
   "author": "EdgeImpulse Inc. <hello@edgeimpulse.com>",
   "license": "Apache-2.0",
+  "type": "module",
   "dependencies": {
       "@aws-sdk/client-iot-data-plane": "^3.624.0",
       "@types/uuid": "^10.0.0"
