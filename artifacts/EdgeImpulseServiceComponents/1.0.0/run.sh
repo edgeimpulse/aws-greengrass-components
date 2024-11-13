@@ -86,6 +86,8 @@ announce_versions() {
     echo "EI: GST Args: ${GST_ARGS}"
     echo "EI: Shutdown behavior: ${SHUTDOWN_BEHAVIOR}"
     echo "EI: Publish Inference Image to IoCore: ${PUBLISH_INFERENCE_IMAGE}"
+    echo "EI: Enable cache file writes: ${ENABLE_CACHE_TO_FILE}"
+    echo "EI: Cache File Directory: ${CACHE_FILE_DIRECTORY}"
 }
 
 kill_proc() {
