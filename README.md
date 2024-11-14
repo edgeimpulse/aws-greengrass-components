@@ -92,61 +92,61 @@ Additionally, we can customize the defaulted configuration of your custom compon
 
 The default configuration contains the following attributes:
 
-	EdgeImpulseLinuxServiceComponent.yaml:
-	{
-	      "node_version": "20.12.1",		             
-	      "vips_version": "8.12.1",                    
-	      "device_name": "MyEdgeImpulseDevice",
-	      "launch": "linux",
-	      "sleep_time_sec": 10,
-	      "lock_filename": "/tmp/ei_lockfile_linux",
-	      "gst_args": "__none__",
-	      "eiparams": "--greengrass",
-	      "iotcore_backoff": "5",
-	      "iotcore_qos": "1",
-	      "ei_bindir": "/usr/local/bin",
-	      "ei_sm_secret_id": "EI_API_KEY",
-	      "ei_sm_secret_name": "ei_api_key",
-	      "ei_ggc_user_groups": "video audio input users",
-	      "install_kvssink": "no",
-      	      "publish_inference_base64_image": "no",
-      	      "enable_cache_to_file": "no",
-      	      "cache_file_directory": "__none__"
-    	}
+		EdgeImpulseLinuxServiceComponent.yaml:
+		{
+			"node_version": "20.12.1",		             
+			"vips_version": "8.12.1",                    
+			"device_name": "MyEdgeImpulseDevice",
+			"launch": "linux",
+			"sleep_time_sec": 10,
+			"lock_filename": "/tmp/ei_lockfile_linux",
+			"gst_args": "__none__",
+			"eiparams": "--greengrass",
+			"iotcore_backoff": "5",
+			"iotcore_qos": "1",
+			"ei_bindir": "/usr/local/bin",
+			"ei_sm_secret_id": "EI_API_KEY",
+			"ei_sm_secret_name": "ei_api_key",
+			"ei_ggc_user_groups": "video audio input users",
+			"install_kvssink": "no",
+			"publish_inference_base64_image": "no",
+			"enable_cache_to_file": "no",
+			"cache_file_directory": "__none__"
+		}
     	
-    	EdgeImpulseLinuxRunnerServiceComponent.yaml:
-    	{
-	      "node_version": "20.12.1",
-	      "vips_version": "8.12.1",
-	      "device_name": "MyEdgeImpulseDevice",
-	      "launch": "runner",
-	      "sleep_time_sec": 10,
-	      "lock_filename": "/tmp/ei_lockfile_runner",
-	      "gst_args": "__none__",
-	      "eiparams": "--greengrass",
-	      "iotcore_backoff": "5",
-	      "iotcore_qos": "1",
-	      "ei_bindir": "/usr/local/bin",
-	      "ei_sm_secret_id": "EI_API_KEY",
-	      "ei_sm_secret_name": "ei_api_key",
-	      "ei_ggc_user_groups": "video audio input users",
-              "install_kvssink": "no",
-              "publish_inference_base64_image": "no",
-              "enable_cache_to_file": "no",
-              "cache_file_directory": "__none__"
-   	 }
+		EdgeImpulseLinuxRunnerServiceComponent.yaml:
+		{
+			"node_version": "20.12.1",
+			"vips_version": "8.12.1",
+			"device_name": "MyEdgeImpulseDevice",
+			"launch": "runner",
+			"sleep_time_sec": 10,
+			"lock_filename": "/tmp/ei_lockfile_runner",
+			"gst_args": "__none__",
+			"eiparams": "--greengrass",
+			"iotcore_backoff": "5",
+			"iotcore_qos": "1",
+			"ei_bindir": "/usr/local/bin",
+			"ei_sm_secret_id": "EI_API_KEY",
+			"ei_sm_secret_name": "ei_api_key",
+			"ei_ggc_user_groups": "video audio input users",
+			"install_kvssink": "no",
+			"publish_inference_base64_image": "no",
+			"enable_cache_to_file": "no",
+			"cache_file_directory": "__none__"
+		}
     	
-    	EdgeImpulseSerialRunnerServiceComponent.yaml:
-	{
-	      "node_version": "20.12.1",
-	      "device_name": "MyEdgeImpulseDevice",
-	      "sleep_time_sec": 10,
-	      "lock_filename": "/tmp/ei_lockfile_serial_runner",
-	      "iotcore_backoff": "5",
-	      "iotcore_qos": "1",
-	      "ei_bindir": "/usr/local/bin",
-	      "ei_ggc_user_groups": "video audio input users dialout"
-    	}
+		EdgeImpulseSerialRunnerServiceComponent.yaml:
+		{
+			"node_version": "20.12.1",
+			"device_name": "MyEdgeImpulseDevice",
+			"sleep_time_sec": 10,
+			"lock_filename": "/tmp/ei_lockfile_serial_runner",
+			"iotcore_backoff": "5",
+			"iotcore_qos": "1",
+			"ei_bindir": "/usr/local/bin",
+			"ei_ggc_user_groups": "video audio input users dialout"
+		}
     	
 #### Attribute Description
 
