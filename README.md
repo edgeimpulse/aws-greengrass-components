@@ -92,8 +92,8 @@ Additionally, we can customize the defaulted configuration of your custom compon
 
 The default configuration contains the following attributes:
 
-		EdgeImpulseLinuxServiceComponent.yaml:
-		{
+	EdgeImpulseLinuxServiceComponent.yaml:
+	{
 	      "node_version": "20.12.1",		             
 	      "vips_version": "8.12.1",                    
 	      "device_name": "MyEdgeImpulseDevice",
@@ -107,7 +107,11 @@ The default configuration contains the following attributes:
 	      "ei_bindir": "/usr/local/bin",
 	      "ei_sm_secret_id": "EI_API_KEY",
 	      "ei_sm_secret_name": "ei_api_key",
-	      "ei_ggc_user_groups": "video audio input users"
+	      "ei_ggc_user_groups": "video audio input users",
+	      "install_kvssink": "no",
+      	      "publish_inference_base64_image": "no",
+      	      "enable_cache_to_file": "no",
+      	      "cache_file_directory": "__none__"
     	}
     	
     	EdgeImpulseLinuxRunnerServiceComponent.yaml:
@@ -125,11 +129,15 @@ The default configuration contains the following attributes:
 	      "ei_bindir": "/usr/local/bin",
 	      "ei_sm_secret_id": "EI_API_KEY",
 	      "ei_sm_secret_name": "ei_api_key",
-	      "ei_ggc_user_groups": "video audio input users"
-	    }
+	      "ei_ggc_user_groups": "video audio input users",
+              "install_kvssink": "no",
+              "publish_inference_base64_image": "no",
+              "enable_cache_to_file": "no",
+              "cache_file_directory": "__none__"
+   	 }
     	
     	EdgeImpulseSerialRunnerServiceComponent.yaml:
-		{
+	{
 	      "node_version": "20.12.1",
 	      "device_name": "MyEdgeImpulseDevice",
 	      "sleep_time_sec": 10,
@@ -158,6 +166,10 @@ The attributes in each of the above default configurations is outlined below:
 		ei_ggc_user_groups: A list of additional groups the GG service user will need to be members of to allow the Edge Impulse service to invoke and operate correctly (typically leave as-is)
 		ei_sm_secret_id: ID of the Edge Impulse API Key within AWS Secret Manager
 		ei_sm_secret_name: Name of the Edge Impulse API Key within AWS Secret Manager
+		install_kvssink: Option (default: "no", on: "yes") to build and make ready the kvssink gstreamer plugin
+		publish_inference_base64_image: Option (default: "no", on: "yes") to include a base64 encoded image that the inference result was based on
+		enable_cache_to_file: Option (default: "no", on: "yes") to enable both inference and associated image to get written to a specified local directory as a pair: <guid>.img  and <guid>.json for each inference identified with a <guid>
+		cache_file_directory: Option (default: "__none__") to specify the local directory when enable_cache_to_file is set to "yes"
 
 ### 6. Gather and install an EdgeImpulse API Key into AWS Secrets Manager
 
