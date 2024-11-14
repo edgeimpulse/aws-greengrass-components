@@ -50,7 +50,7 @@ Manifests:
         script: |-
           /bin/bash {artifacts:path}/stop.sh {artifacts:path} {configuration:/Parameters/lock_filename} 
     Artifacts:
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/install.sh
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/run.sh
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/launch.sh
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/stop.sh
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/install.sh
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/run.sh
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/launch.sh
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/stop.sh

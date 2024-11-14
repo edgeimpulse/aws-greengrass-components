@@ -37,11 +37,11 @@ Manifests:
         script: |-
           /bin/bash {artifacts:path}/stop.sh {artifacts:path} {configuration:/Parameters/lock_filename} 
     Artifacts:
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/aws-iotcore-connector.ts
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/aws-iotcore-serial-scraper.ts
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/package.json
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/install_serial.sh
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/run_serial.sh
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/launch_serial.sh
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/stop.sh
-      - URI: s3://mys3repo123987/artifacts/EdgeImpulseServiceComponent/1.0.0/parser.sh
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/aws-iotcore-connector.ts
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/aws-iotcore-serial-scraper.ts
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/package.json
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/install_serial.sh
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/run_serial.sh
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/launch_serial.sh
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/stop.sh
+      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/parser.sh
