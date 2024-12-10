@@ -12,7 +12,13 @@ SHUTDOWN_BEHAVIOR=$9
 PUBLISH_INFERENCE_IMAGE="${10}"
 ENABLE_CACHE_TO_FILE="${11}"
 CACHE_FILE_DIRECTORY="${12}"
-shift 12
+ENABLE_THRESHOLD_LIMIT="${13}"
+METRICS_SLEEPTIME_MS="${14}"
+DEFAULT_THRESHOLD="${15}"
+THRESHOLD_CRITERIA="${16}"
+ENABLE_CACHE_TO_S3="${17}"
+S3_BUCKET="${18}"
+shift 18
 CMD=$*
 
 if [ ! -z "${GST_LAUNCH_ARGS}" ]; then
@@ -98,6 +104,32 @@ if [ "${ENABLE_CACHE_TO_FILE}" = "yes" ]; then
 else
     export EI_ENABLE_WRITE_TO_FILE="no"
 fi
+
+#
+# Option to enable/configure thresholding throttle
+#
+if [ "${ENABLE_THRESHOLD_LIMIT}" = "yes" ]; then
+    export EI_ENABLE_THRESHOLD_LIMIT="yes"
+else 
+    export EI_ENABLE_THRESHOLD_LIMIT="no"
+fi
+export EI_DEFAULT_THRESHOLD=${DEFAULT_THRESHOLD}
+export EI_THRESHOLD_CRITERIA=${THRESHOLD_CRITERIA}
+
+#
+# Metrics Configuration
+#
+export EI_IOTCORE_METRICS_DISPATCH_TIME_MS=${METRICS_SLEEPTIME_MS}
+
+#
+# S3 cache option
+#
+if [ "${ENABLE_CACHE_TO_S3}" = "yes" ]; then
+    export EI_ENABLE_WRITE_TO_S3="yes"
+else
+    export EI_ENABLE_WRITE_TO_S3="no"
+fi
+export EI_S3_BUCKET="${S3_BUCKET}"
 
 #
 # Option for caching if enabled
