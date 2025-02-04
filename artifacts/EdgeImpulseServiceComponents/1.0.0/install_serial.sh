@@ -1,13 +1,12 @@
-#!/bin/bash
+#!/bin/sh
 
 # Defaults based on: edgeimpulse/bin/firmware/bin/linux/orin.sh
-NODE_VERSION=20.12.1
-LIBVIPS_VERSION=8.12.1
-NPM_VERSION=10.8.1
+NODE_VERSION="20.18.2"
+LIBVIPS_VERSION="8.12.1"
+NPM_VERSION="10.8.1"
 ARCH=`uname -m`
 APT=`which apt`
 YUM=`which yum`
-YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip)'`
 OS=`uname -s | tr '[:upper:]' '[:lower:]'`
 ALL=`uname -a`
 
@@ -16,6 +15,46 @@ ALL=`uname -a`
 #
 IS_DEBIAN=`uname -v | grep Debian`
 IS_UBUNTU=`uname -v | grep Ubuntu`
+export YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip|qc|qli|frdm)'`
+IS_AVNET_RZBOARD=`uname -a | grep -E '(rzboard)'`
+IS_FRDM_BOARD=`uname -a | grep -E '(frdm)'`
+IS_QC_BOARD=`uname -a | grep -E '(qli)'`
+ROOT_DIR="/"
+
+#
+# Qualcomm special /usr handling
+#
+if [ ! -z "${IS_QC_BOARD}" ]; then
+    ROOT_DIR="/usr"
+fi
+
+#
+# Rationalize 
+#
+if [ ! -z "${IS_FRDM_BOARD}"] || [ ! -z "${IS_QC_BOARD}" ]; then
+    IS_DEBIAN=""
+    IS_UBUNTU=""
+    APT=""
+    YUM=""
+    export YOCTO="yocto"
+fi
+
+# Rationalize for those yocto instances whose 'uname -a' does not reveal that its yocto
+if [ -z "${YOCTO}" ]; then
+    if [ -z "${IS_UBUNTU}" ] && [ -z "${IS_DEBIAN}" ]; then
+        YOCTO_CHECK=`uname -a | cut -d ' ' -f 3 | grep "v"`  # look for version in release version (i.e. "v8" in scarthgap)
+        if [ ! -z "${YOCTO_CHECK}" ]; then
+            echo "Override check: On Yocto Platform: ${YOCTO_CHECK}."
+            export YOCTO="yocto"
+        else 
+            echo "WARNING: Unable to ascertain whether we are on Yocto or not: check: ${YOCTO_CHECK} yocto: ${YOCTO} all: ${ALL}"
+        fi
+    else 
+        echo "On either Ubuntu or Debian. OK"
+    fi
+else
+    echo "On Yocto platform: ${YOCTO}"
+fi
 
 #
 # GG Component Deployment Command line params
@@ -41,8 +80,20 @@ fi
 # patch /usr/local/bin to the path...
 BIN_DIR="/usr/local/bin"
 
-# Greengrass service user
-GREENGRASS_SERVICEUSER="ggc_user"
+# Greengrass Configuration
+export GREENGRASS_SERVICEUSER="ggc_user"
+export GREENGRASS_SERVICEGROUP="ggc_group"
+export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}
+export GG_LITE="NO"
+if [ -f /etc/greengrass/config.d/greengrass-lite.yaml ]; then
+    export GG_LITE="YES"
+    export GREENGRASS_SERVICEUSER="ggcore"
+    export GREENGRASS_SERVICEGROUP="ggcore"
+    export TARGET_USER=${GREENGRASS_SERVICEUSER}
+    export TARGET_GROUP=${GREENGRASS_SERVICEGROUP}
+    export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}
+    export TARGET_DIR=${HOME_DIR}
+fi
 
 # Ensure our path is set correctly... 
 export PATH=${BIN_DIR}:${PATH}
@@ -56,19 +107,78 @@ announce_versions() {
     echo "NodeJS Machine Name: ${NODE_ARCHIVE_ARCH}"
 }
 
+fixup_perms() {
+    cd ${TARGET_DIR}
+    chown -R ${TARGET_USER}:${TARGET_GROUP} .
+}
+
 install_nodejs() {
     NODE=`which node`
     if [ ! -z "${NODE}" ]; then
         NODE_VER=`node --version`
-        echo "NodeJS ${NODE} already installed. Skipping install... OK. Version: ${NODE_VER}"
+        if [ "${NODE_VER}" != "v${NODE_VERSION}" ]; then
+            echo "Other version of NodeJS installed: ${NODE_VER}. Changing to v${NODE_VERSION}..." 
+            if [ -f node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz ]; then
+               rm -f node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+            fi
+            wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+            tar -xJf node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+            rm node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+            if [ ! -d /usr/local ]; then
+                mkdir /usr/local
+            fi
+            if [ ! -L /usr/local/bin ]; then
+                if [ ! -d /usr/local/bin ]; then
+                    mkdir /usr/local/bin
+                fi
+            fi
+            if [ ! -L /usr/local/lib ]; then
+                if [ ! -d /usr/local/lib ]; then
+                    mkdir /usr/local/lib
+                fi
+            fi
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/bin/* /usr/local/bin
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/lib/* /usr/local/lib
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}include /usr/local
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/share /usr/local
+        else
+            echo "NodeJS ${NODE} already installed. Skipping install... OK. Version: ${NODE_VER}"
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/bin/* /usr/local/bin
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/lib/* /usr/local/lib
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}include /usr/local
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/share /usr/local
+        fi
     else 
         echo "NodeJS not installed. Installing ${NODE_VERSION}..." 
+        if [ -f node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz ]; then
+            rm -f node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+        fi
         wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
         tar -xJf node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
-        cd node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}
-        cp -R * /usr/local/
-        cd ..
+        rm node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+        if [ ! -d /usr/local ]; then
+            mkdir /usr/local
+        fi
+        if [ ! -L /usr/local/bin ]; then
+            if [ ! -d /usr/local/bin ]; then
+                mkdir /usr/local/bin
+            fi
+        fi
+        if [ ! -L /usr/local/lib ]; then
+            if [ ! -d /usr/local/lib ]; then
+                mkdir /usr/local/lib
+            fi
+        fi
+        ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/bin/* /usr/local/bin
+        ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/lib/* /usr/local/lib
+        ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}include /usr/local
+        ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/share /usr/local
     fi
+
+    #
+    # Set the prefix to /usr/local
+    #
+    npm config set prefix /usr/local
 }
 
 install_npm() {
@@ -176,7 +286,41 @@ install_parser() {
     chmod 644 ${PARSER_INSTALL_DIR}/package*
 }
 
+check_root_rw() {
+    if [ ! -z "${YOCTO}" ]; then
+        touch /usr/test
+        status=$?
+        if [ "${status}" != "0" ]; then
+            echo "Yocto Root filesystem is RO. Changing to RW..."
+            mount -o remount,rw ${ROOT_DIR}
+            touch /usr/test
+            status=$?
+            if [ "${status}" = "0" ]; then
+                echo "Root filesystem set to RW... Reboot when component install is complete"
+                rm -f /tmp/usr/test
+                export RESET_TO_RO="YES"
+            else
+                echo "Unable to enable rw the yocto root filesystem. Exiting..."
+                exit 2
+            fi
+        else
+            echo "Root filesystem already rw... OK"
+            rm -f /usr/test
+        fi
+    else
+        echo "Not on YOCTO - no need to check root rw status. OK"
+    fi
+}
+
+set_root_ro() {
+    if [ "${RESET_TO_RO}" = "YES" ]; then
+       echo "Resetting root filesystem to RO..."
+       mount -o remount,ro ${ROOT_DIR}
+    fi
+}
+
 verify_install() {
+    fixup_perms $*
     NODE=`which node`
     NODE_VER=`node --version`
     EI=`which edge-impulse-run-impulse`
@@ -184,10 +328,45 @@ verify_install() {
     echo "Edge Impulse Serial Runner Installed!"
     echo "NodeJS: ${NODE} ${NODE_VER}"
     echo "EI: ${EI} ${EI_VER}"
+    set_root_ro $*
+}
+
+check_service_user() {
+    # User existance check
+    id -u ${GREENGRASS_SERVICEUSER} 2>&1 1> /dev/null
+    USER_CHECK=$?
+    if [ "${USER_CHECK}" != "0" ]; then
+        echo "Creating Greengrass Service User: ${GREENGRASS_SERVICEUSER} in group ${GREENGRASS_SERVICEGROUP}..."
+        addgroup ${GREENGRASS_SERVICEGROUP}
+        useradd ${GREENGRASS_SERVICEUSER} -d ${HOME_DIR} --shell /bin/bash --groups ${GREENGRASS_SERVICEGROUP}${GG_EXTRA_GROUPS}
+        id -u ${GREENGRASS_SERVICEUSER} 2>&1 1> /dev/null
+        USER_CHECK=$?
+        if [ "${USER_CHECK}" != "0" ]; then
+            echo "Greengrass Service User: ${GREENGRASS_SERVICEUSER} creation FAILED."
+        else
+            echo "Greengrass Service User: ${GREENGRASS_SERVICEUSER} creation SUCCESS."
+        fi
+    else
+        echo "Greengrass Service User: ${GREENGRASS_SERVICEUSER} already exists... OK"
+    fi
+
+    # Home directory check
+    if [ ! -d ${HOME_DIR} ]; then
+        echo "Creating home directory for Greengrass Service User: ${GREENGRASS_SERVICEUSER} Home Directory: ${HOME_DIR}..."
+        mkdir -p ${HOME_DIR}
+        chown ${GREENGRASS_SERVICEUSER} ${HOME_DIR}
+        chgrp ${GREENGRASS_SERVICEGROUP} ${HOME_DIR}
+        chmod 775 ${HOME_DIR}
+        echo "Greengrass Service User home directory: ${HOME_DIR} created."
+    else
+        echo "Greengrass Service User home directory: ${HOME_DIR} exists already (OK)."
+    fi
 }
 
 main() {
     announce_versions $*
+    check_root_rw $*
+    check_service_user $*
     install_deps $*
     install_nodejs $*
     install_npm $*

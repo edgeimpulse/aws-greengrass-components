@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #
 # DEBUG
@@ -16,7 +16,33 @@ IOTCORE_QOS="$6"
 EI_BINDIR="$7"
 
 EXISTS="2"
-YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip)'`
+
+#
+# Is Debian, Ubuntu, Yocto?
+#
+IS_DEBIAN=`uname -v | grep Debian`
+IS_UBUNTU=`uname -v | grep -E '(Ubuntu|RT)'`
+export YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip|qc|qli|frdm)'`
+IS_AVNET_RZBOARD=`uname -a | grep -E '(rzboard)'`
+IS_FRDM_BOARD=`uname -a | grep -E '(frdm)'`
+IS_QC_BOARD=`uname -a | grep -E '(qli)'`
+
+# Rationalize for those yocto instances whose 'uname -a' does not reveal that its yocto
+if [ -z "${YOCTO}" ]; then
+    if [ -z "${IS_UBUNTU}" ] && [ -z "${IS_DEBIAN}" ]; then
+        YOCTO_CHECK=`uname -a | cut -d ' ' -f 3 | grep "v"`  # look for version in release version (i.e. "v8" in scarthgap)
+        if [ ! -z "${YOCTO_CHECK}" ]; then
+            echo "Override check: On Yocto Platform: ${YOCTO_CHECK}."
+            export YOCTO="yocto"
+        else 
+            echo "WARNING: Unable to ascertain whether we are on Yocto or not: check: ${YOCTO_CHECK} yocto: ${YOCTO} all: ${ALL}"
+        fi
+    else 
+        echo "On either Ubuntu or Debian. OK"
+    fi
+else
+    echo "On Yocto platform: ${YOCTO}"
+fi
 
 #
 # Binary directory
@@ -32,6 +58,18 @@ export PATH=${BIN_DIR}:${PATH}
 # map GST_ARGS from placeholder
 if [ "${GST_ARGS}" = "__none__" ]; then
     GST_ARGS=""
+fi
+
+# Greengrass Configuration
+export GREENGRASS_SERVICEUSER="ggc_user"
+export GREENGRASS_SERVICEGROUP="ggc_group"
+export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}
+export GG_LITE="NO"
+if [ -f /etc/greengrass/config.d/greengrass-lite.yaml ]; then
+    export GG_LITE="YES"
+    export GREENGRASS_SERVICEUSER="gg_component"
+    export GREENGRASS_SERVICEGROUP="gg_component"
+    export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}   
 fi
 
 # Make our device name and lock file unique for our specific host

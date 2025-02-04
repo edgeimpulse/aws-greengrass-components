@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 
 # Defaults based on: edgeimpulse/bin/firmware/bin/linux/orin.sh
-NODE_VERSION=20.12.1
-LIBVIPS_VERSION=8.12.1
-NPM_VERSION=10.8.1
+NODE_VERSION="20.12.2"
+LIBVIPS_VERSION="8.12.1"
+NPM_VERSION="10.8.1"
 ARCH=`uname -m`
 APT=`which apt`
 YUM=`which yum`
@@ -15,8 +15,51 @@ ALL=`uname -a`
 #
 IS_DEBIAN=`uname -v | grep Debian`
 IS_UBUNTU=`uname -v | grep -E '(Ubuntu|RT)'`
-YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip)'`
+export YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip|qc|qli|frdm)'`
 IS_AVNET_RZBOARD=`uname -a | grep -E '(rzboard)'`
+IS_FRDM_BOARD=`uname -a | grep -E '(frdm)'`
+IS_QC_BOARD=`uname -a | grep -E '(qli)'`
+ROOT_DIR="/"
+
+#
+# Qualcomm special /usr handling
+#
+if [ ! -z "${IS_QC_BOARD}" ]; then
+    ROOT_DIR="/usr"
+fi
+
+#
+# Rationalize 
+#
+if [ ! -z "${IS_FRDM_BOARD}"] || [ ! -z "${IS_QC_BOARD}" ]; then
+    IS_DEBIAN=""
+    IS_UBUNTU=""
+    APT=""
+    YUM=""
+    export YOCTO="yocto"
+fi
+
+# Rationalize for those yocto instances whose 'uname -a' does not reveal that its yocto
+if [ -z "${YOCTO}" ]; then
+    if [ -z "${IS_UBUNTU}" ] && [ -z "${IS_DEBIAN}" ]; then
+        YOCTO_CHECK=`uname -a | cut -d ' ' -f 3 | grep "v"`  # look for version in release version (i.e. "v8" in scarthgap)
+        if [ ! -z "${YOCTO_CHECK}" ]; then
+            echo "Override check: On Yocto Platform: ${YOCTO_CHECK}."
+            export YOCTO="yocto"
+        else 
+            echo "WARNING: Unable to ascertain whether we are on Yocto or not: check: ${YOCTO_CHECK} yocto: ${YOCTO} all: ${ALL}"
+        fi
+    else 
+        echo "On either Ubuntu or Debian. OK"
+    fi
+else
+    echo "On Yocto platform: ${YOCTO}"
+fi
+
+#
+# Platform Debug
+#
+echo "Platform Details: debian: ${IS_DEBIAN} ubuntu: ${IS_UBUNTU} avnet: ${IS_AVNET_RZBOARD} yocto: ${YOCTO}"
 
 #
 # GG Component Deployment Command line params
@@ -47,18 +90,28 @@ fi
 # patch /usr/local/bin to the path...
 BIN_DIR="/usr/local/bin"
 
-# Greengrass service user
-GREENGRASS_SERVICEUSER="ggc_user"
-GREENGRASS_SERVICEGROUP="ggc_group"
+# Greengrass Configuration
+export GREENGRASS_SERVICEUSER="ggc_user"
+export GREENGRASS_SERVICEGROUP="ggc_group"
+export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}
+export GG_LITE="NO"
+if [ -f /etc/greengrass/config.d/greengrass-lite.yaml ]; then
+    export GG_LITE="YES"
+    export GREENGRASS_SERVICEUSER="ggcore"
+    export GREENGRASS_SERVICEGROUP="ggcore"
+    export TARGET_USER=${GREENGRASS_SERVICEUSER}
+    export TARGET_GROUP=${GREENGRASS_SERVICEGROUP}
+    export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}
+    export TARGET_DIR=${HOME_DIR}
+fi
 
 # kvssink compile 
-export SRC_DIR=/home/${GREENGRASS_SERVICEUSER}
 if [ -z "${GST_PLUGIN_PATH}" ]; then
-    export GST_PLUGIN_PATH="${SRC_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp/build"
+    export GST_PLUGIN_PATH="${HOME_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp/build"
 else
-    export GST_PLUGIN_PATH="${SRC_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp/build:${GST_PLUGIN_PATH}"
+    export GST_PLUGIN_PATH="${HOME_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp/build:${GST_PLUGIN_PATH}"
 fi
-export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${SRC_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp/open-source/local/lib"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${HOME_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp/open-source/local/lib"
 
 # /tmp/tmp directory
 TMP_TMP_DIR="/tmp/tmp"
@@ -74,30 +127,78 @@ announce_versions() {
     echo "NodeJS Machine Name: ${NODE_ARCHIVE_ARCH}"
 }
 
+fixup_perms() {
+    cd ${TARGET_DIR}
+    chown -R ${TARGET_USER}:${TARGET_GROUP} .
+}
+
 install_nodejs() {
     NODE=`which node`
     if [ ! -z "${NODE}" ]; then
         NODE_VER=`node --version`
         if [ "${NODE_VER}" != "v${NODE_VERSION}" ]; then
-            echo "Old version of NodeJS installed. Updating to v${NODE_VERSION}..." 
+            echo "Other version of NodeJS installed: ${NODE_VER}. Changing to v${NODE_VERSION}..." 
+            if [ -f node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz ]; then
+               rm -f node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+            fi
             wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
             tar -xJf node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
             rm node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
-            cd node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}
-            cp -R * /usr/local/
-            cd ..
+            if [ ! -d /usr/local ]; then
+                mkdir /usr/local
+            fi
+            if [ ! -L /usr/local/bin ]; then
+                if [ ! -d /usr/local/bin ]; then
+                    mkdir /usr/local/bin
+                fi
+            fi
+            if [ ! -L /usr/local/lib ]; then
+                if [ ! -d /usr/local/lib ]; then
+                    mkdir /usr/local/lib
+                fi
+            fi
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/bin/* /usr/local/bin
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/lib/* /usr/local/lib
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}include /usr/local
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/share /usr/local
         else
             echo "NodeJS ${NODE} already installed. Skipping install... OK. Version: ${NODE_VER}"
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/bin/* /usr/local/bin
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/lib/* /usr/local/lib
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}include /usr/local
+            ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/share /usr/local
         fi
     else 
         echo "NodeJS not installed. Installing ${NODE_VERSION}..." 
+        if [ -f node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz ]; then
+            rm -f node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
+        fi
         wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
         tar -xJf node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
         rm node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}.tar.xz
-        cd node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}
-        cp -R * /usr/local/
-        cd ..
+        if [ ! -d /usr/local ]; then
+            mkdir /usr/local
+        fi
+        if [ ! -L /usr/local/bin ]; then
+            if [ ! -d /usr/local/bin ]; then
+                mkdir /usr/local/bin
+            fi
+        fi
+        if [ ! -L /usr/local/lib ]; then
+            if [ ! -d /usr/local/lib ]; then
+                mkdir /usr/local/lib
+            fi
+        fi
+        ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/bin/* /usr/local/bin
+        ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/lib/* /usr/local/lib
+        ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}include /usr/local
+        ln -sf /usr/node-v${NODE_VERSION}-${OS}-${NODE_ARCHIVE_ARCH}/share /usr/local
     fi
+
+    #
+    # Set the prefix to /usr/local
+    #
+    npm config set prefix /usr/local
 }
 
 install_npm() {
@@ -117,7 +218,7 @@ install_npm() {
             echo "On YOCTO-based platform. Unable to install npm manually (ERROR)"
             exit 2
         else 
-            echo "Platform: ${ALL} not supported. npm NOT installed"
+            echo "install_npm(): Platform: ${ALL} not supported. npm NOT installed"
             exit 1
         fi
     fi
@@ -152,26 +253,30 @@ setup_GG_service_user_perms() {
 }
 
 install_deps_debian() {
-    # Default libjpeg to be used for most Ubuntu platforms...
-    LIBJPEG="libjpeg-turbo8-dev"
+    if [ -z "${YOCTO}" ]; then
+        # Default libjpeg to be used for most Ubuntu platforms...
+        LIBJPEG="libjpeg-turbo8-dev"
 
-    # hack for Debian/Raspberry Pi... ugh...
-    if [ ! -z "${IS_DEBIAN}" ]; then
-       echo "Adjusting libjpeg for RPi/Debian..."
-        LIBJPEG="libjpeg62-turbo-dev"
-    fi
+        # hack for Debian/Raspberry Pi... ugh...
+        if [ ! -z "${IS_DEBIAN}" ]; then
+        echo "Adjusting libjpeg for RPi/Debian..."
+            LIBJPEG="libjpeg62-turbo-dev"
+        fi
 
-    apt update
-    apt install -y gcc g++ make build-essential pkg-config libglib2.0-dev libexpat1-dev sox v4l-utils ${LIBJPEG} meson ninja-build
-    apt install -y gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-plugins-base gstreamer1.0-plugins-base-apps
+        apt update
+        apt install -y gcc g++ make build-essential pkg-config libglib2.0-dev libexpat1-dev sox v4l-utils ${LIBJPEG} meson ninja-build
+        apt install -y gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-plugins-base gstreamer1.0-plugins-base-apps
 
-    # Future: GStreamer "kvssink" plugin build support
-    apt install -y cmake libssl-dev libcurl4-openssl-dev liblog4cplus-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-tools
+        # Future: GStreamer "kvssink" plugin build support
+        apt install -y cmake libssl-dev libcurl4-openssl-dev liblog4cplus-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-tools
 
-    # hack for ugly ubuntu 22+ pipewire gunk...
-    if [ ! -z "${IS_UBUNTU}" ]; then
-        echo "Adding systemd-container to work around pipewire changes in ubuntu 22+..."
-        apt install -y systemd-container
+        # hack for ugly ubuntu 22+ pipewire gunk...
+        if [ ! -z "${IS_UBUNTU}" ]; then
+            echo "Adding systemd-container to work around pipewire changes in ubuntu 22+..."
+            apt install -y systemd-container
+        fi
+    else
+        echo "On Yocto device. Deps already installed (OK)."
     fi
 }
 
@@ -191,7 +296,7 @@ install_deps() {
     elif [ ! -z "${YOCTO}" ]; then
         echo "On YOCTO-based platform. Unable to install deps. Attempting continue..."
     else 
-        echo "Platform: ${ALL} not supported. No deps installed"
+        echo "install_deps(): Platform: ${ALL} not supported. No deps installed"
         exit 1
     fi
 }
@@ -295,7 +400,7 @@ install_kvssink_dependencies() {
         echo "On YOCTO-based platform. Unable to install kvssink dependencies manually (ERROR)"
         exit 2
     else 
-        echo "Platform: ${ALL} not supported. kvssink dependencies NOT installed"
+        echo "install_kvssink_dependencies(): Platform: ${ALL} not supported. kvssink dependencies NOT installed"
         exit 1
     fi
 }
@@ -308,22 +413,22 @@ install_kvssink() {
 
         # remove any previous
         rm -rf amazon-kinesis-video-streams-producer-sdk-cpp 2>&1 1>/dev/null
-        rm -rf ${SRC_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp 2>&1 1>/dev/null
+        rm -rf ${HOME_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp 2>&1 1>/dev/null
 
         # download
         git clone https://github.com/awslabs/amazon-kinesis-video-streams-producer-sdk-cpp.git
-        mv amazon-kinesis-video-streams-producer-sdk-cpp ${SRC_DIR}
-        cd ${SRC_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp
+        mv amazon-kinesis-video-streams-producer-sdk-cpp ${HOME_DIR}
+        cd ${HOME_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp
         mkdir build
         cd build
         cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DBUILD_JNI=TRUE
 
         # build!
-        cd ${SRC_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp/build
+        cd ${HOME_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp/build
         make
         make install
-        chown -R ${GREENGRASS_SERVICEUSER} ${SRC_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp
-        chgrp -R ${GREENGRASS_SERVICEUSER} ${SRC_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp
+        chown -R ${GREENGRASS_SERVICEUSER} ${HOME_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp
+        chgrp -R ${GREENGRASS_SERVICEUSER} ${HOME_DIR}/amazon-kinesis-video-streams-producer-sdk-cpp
     else
         # already installed
         echo "kvssink already installed! OK."
@@ -337,7 +442,41 @@ rm_tmp_tmp() {
     fi
 }
 
+check_root_rw() {
+    if [ ! -z "${YOCTO}" ]; then
+        touch /usr/test
+        status=$?
+        if [ "${status}" != "0" ]; then
+            echo "Yocto Root filesystem is RO. Changing to RW..."
+            mount -o remount,rw ${ROOT_DIR}
+            touch /usr/test
+            status=$?
+            if [ "${status}" = "0" ]; then
+                echo "Root filesystem set to RW... Reboot when component install is complete"
+                rm -f /tmp/usr/test
+                export RESET_TO_RO="YES"
+            else
+                echo "Unable to enable rw the yocto root filesystem. Exiting..."
+                exit 2
+            fi
+        else
+            echo "Root filesystem already rw... OK"
+            rm -f /usr/test
+        fi
+    else
+        echo "Not on YOCTO - no need to check root rw status. OK"
+    fi
+}
+
+set_root_ro() {
+    if [ "${RESET_TO_RO}" = "YES" ]; then
+       echo "Resetting root filesystem to RO..."
+       mount -o remount,ro ${ROOT_DIR}
+    fi
+}
+
 verify_install() {
+    fixup_perms $*
     NODE=`which node`
     NODE_VER=`node --version`
     EI=`which edge-impulse-linux`
@@ -356,10 +495,45 @@ verify_install() {
             echo "EI: kvssink is installed"
         fi
     fi
+    set_root_ro $*
+}
+
+check_service_user() {
+    # User existance check
+    id -u ${GREENGRASS_SERVICEUSER} 2>&1 1> /dev/null
+    USER_CHECK=$?
+    if [ "${USER_CHECK}" != "0" ]; then
+        echo "Creating Greengrass Service User: ${GREENGRASS_SERVICEUSER} in group ${GREENGRASS_SERVICEGROUP}..."
+        addgroup ${GREENGRASS_SERVICEGROUP}
+        useradd ${GREENGRASS_SERVICEUSER} -d ${HOME_DIR} --shell /bin/bash --groups ${GREENGRASS_SERVICEGROUP}${GG_EXTRA_GROUPS}
+        id -u ${GREENGRASS_SERVICEUSER} 2>&1 1> /dev/null
+        USER_CHECK=$?
+        if [ "${USER_CHECK}" != "0" ]; then
+            echo "Greengrass Service User: ${GREENGRASS_SERVICEUSER} creation FAILED."
+        else
+            echo "Greengrass Service User: ${GREENGRASS_SERVICEUSER} creation SUCCESS."
+        fi
+    else
+        echo "Greengrass Service User: ${GREENGRASS_SERVICEUSER} already exists... OK"
+    fi
+
+    # Home directory check
+    if [ ! -d ${HOME_DIR} ]; then
+        echo "Creating home directory for Greengrass Service User: ${GREENGRASS_SERVICEUSER} Home Directory: ${HOME_DIR}..."
+        mkdir -p ${HOME_DIR}
+        chown ${GREENGRASS_SERVICEUSER} ${HOME_DIR}
+        chgrp ${GREENGRASS_SERVICEGROUP} ${HOME_DIR}
+        chmod 775 ${HOME_DIR}
+        echo "Greengrass Service User home directory: ${HOME_DIR} created."
+    else
+        echo "Greengrass Service User home directory: ${HOME_DIR} exists already (OK)."
+    fi
 }
 
 main() {
     announce_versions $*
+    check_root_rw $*
+    check_service_user $*
     install_deps $*
     install_nodejs $*
     install_npm $*

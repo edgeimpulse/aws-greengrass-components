@@ -1,13 +1,17 @@
 ---
-RecipeFormatVersion: '2020-01-25'
-ComponentName: EdgeImpulseLinuxServiceComponent 
-ComponentVersion: '1.0.0'
-ComponentDescription: 'Service Installer for Edge Impulse Linux service'
-ComponentPublisher: EdgeImpulse
+RecipeFormatVersion: "2020-01-25"
+ComponentName: "EdgeImpulseLinuxServiceComponent"
+ComponentVersion: "1.0.0"
+ComponentDescription: "Service Installer for Edge Impulse Linux service"
+ComponentPublisher: "EdgeImpulse"
+ComponentDependencies:
+  aws.greengrass.TokenExchangeService:
+    VersionRequirement: ">=0.0.0"
+    DependencyType: "HARD"
 ComponentConfiguration:
   DefaultConfiguration:
     Parameters: {
-      "node_version": "20.12.1",
+      "node_version": "20.18.2",
       "vips_version": "8.12.1",
       "device_name": "MyEdgeImpulseDevice",
       "launch": "linux",
@@ -33,11 +37,13 @@ ComponentConfiguration:
       "default_threshold": 50.0,
       "threshold_criteria": "ge",
       "enable_cache_to_s3": "no",
-      "s3_bucket": "__none__", 
+      "s3_bucket": "__none__",
     }
 Manifests:
-  - Platform:
-      os: all
+  - Name: "Default"
+    Platform:
+      os: linux
+      runtime: "*"
     Lifecycle:
       setenv: {
               "CONFIG_PARAMETERS": "{configuration:/Parameters}"
@@ -45,41 +51,18 @@ Manifests:
       install: 
         RequiresPrivilege: true
         Timeout: 9000
-        script: |-
+        Script: |-
           chmod 755 {artifacts:path}/install.sh {artifacts:path}/run.sh {artifacts:path}/launch.sh {artifacts:path}/stop.sh
-          /bin/bash {artifacts:path}/install.sh {artifacts:path} {configuration:/Parameters/node_version} |
-            {configuration:/Parameters/vips_version} {configuration:/Parameters/install_kvssink} |
-            {configuration:/Parameters/ei_ggc_user_groups}
+          sh {artifacts:path}/install.sh {artifacts:path} {configuration:/Parameters/node_version} {configuration:/Parameters/vips_version} {configuration:/Parameters/install_kvssink} {configuration:/Parameters/ei_ggc_user_groups}
       run:
-        script: |-
-          /bin/bash {artifacts:path}/run.sh |
-            {artifacts:path} |
-            {configuration:/Parameters/device_name} |
-            {configuration:/Parameters/launch} {configuration:/Parameters/sleep_time_sec} |
-            {configuration:/Parameters/lock_filename} {configuration:/Parameters/gst_args} |
-            {configuration:/Parameters/iotcore_backoff} {configuration:/Parameters/iotcore_qos} |
-            {configuration:/Parameters/ei_bindir} {configuration:/Parameters/ei_sm_secret_id} |
-            {configuration:/Parameters/ei_sm_secret_name}  |
-            {configuration:/Parameters/ei_poll_sleeptime_ms} |
-            {configuration:/Parameters/ei_local_model_file} |
-            {configuration:/Parameters/ei_shutdown_behavior} |
-            {configuration:/Parameters/publish_inference_base64_image} |
-            {configuration:/Parameters/enable_cache_to_file} |
-            {configuration:/Parameters/cache_file_directory} |
-            {configuration:/Parameters/enable_threshold_limit} |
-            {configuration:/Parameters/metrics_sleeptime_ms} |
-            {configuration:/Parameters/default_threshold} |
-            {configuration:/Parameters/threshold_criteria} |
-            {configuration:/Parameters/enable_cache_to_s3} |
-            {configuration:/Parameters/s3_bucket} |
-            {configuration:/Parameters/eiparams}
-
+        Script: |-
+          sh {artifacts:path}/run.sh {artifacts:path} {configuration:/Parameters/device_name} {configuration:/Parameters/launch} {configuration:/Parameters/sleep_time_sec} {configuration:/Parameters/lock_filename} {configuration:/Parameters/gst_args} {configuration:/Parameters/iotcore_backoff} {configuration:/Parameters/iotcore_qos} {configuration:/Parameters/ei_bindir} {configuration:/Parameters/ei_sm_secret_id} {configuration:/Parameters/ei_sm_secret_name} {configuration:/Parameters/ei_poll_sleeptime_ms} {configuration:/Parameters/ei_local_model_file} {configuration:/Parameters/ei_shutdown_behavior} {configuration:/Parameters/publish_inference_base64_image} {configuration:/Parameters/enable_cache_to_file} {configuration:/Parameters/cache_file_directory} {configuration:/Parameters/enable_threshold_limit} {configuration:/Parameters/metrics_sleeptime_ms} {configuration:/Parameters/default_threshold} {configuration:/Parameters/threshold_criteria} {configuration:/Parameters/enable_cache_to_s3} {configuration:/Parameters/s3_bucket} {configuration:/Parameters/eiparams}
       shutdown:
         RequiresPrivilege: true
-        script: |-
-          /bin/bash {artifacts:path}/stop.sh {artifacts:path} {configuration:/Parameters/lock_filename} 
+        Script: |-
+          sh {artifacts:path}/stop.sh {artifacts:path} {configuration:/Parameters/lock_filename} 
     Artifacts:
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/install.sh
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/run.sh
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/launch.sh
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/stop.sh
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/install.sh
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/run.sh
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/launch.sh
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/stop.sh

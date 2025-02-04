@@ -1,24 +1,32 @@
 ---
-RecipeFormatVersion: '2020-01-25'
-ComponentName: EdgeImpulseSerialRunnerServiceComponent 
-ComponentVersion: '1.0.0'
-ComponentDescription: 'Service Installer for Edge Impulse Serial Runner service'
-ComponentPublisher: EdgeImpulse
+RecipeFormatVersion: "2020-01-25"
+ComponentName: "EdgeImpulseSerialRunnerServiceComponent"
+ComponentVersion: "1.0.0"
+ComponentDescription: "Service Installer for Edge Impulse Serial Runner service"
+ComponentPublisher: "EdgeImpulse"
+ComponentDependencies:
+  aws.greengrass.TokenExchangeService:
+    VersionRequirement: ">=0.0.0"
+    DependencyType: "HARD"
 ComponentConfiguration:
   DefaultConfiguration:
     Parameters: {
-      "node_version": "20.12.1",
+      "node_version": "20.18.2",
       "device_name": "MyEdgeImpulseDevice",
       "sleep_time_sec": 10,
       "lock_filename": "/tmp/ei_lockfile_serial_runner",
       "iotcore_backoff": "5",
       "iotcore_qos": "1",
       "ei_bindir": "/usr/local/bin",
-      "ei_ggc_user_groups": "video audio input users dialout"
+      "ei_local_model_file": "__none__",
+      "ei_shutdown_behavior": "__none__",
+      "ei_ggc_user_groups": "video audio input users dialout",
     }
 Manifests:
-  - Platform:
-      os: all
+  - Name: "Default"
+    Platform:
+      os: linux
+      runtime: "*"
     Lifecycle:
       setenv: {
               "CONFIG_PARAMETERS": "{configuration:/Parameters}"
@@ -26,22 +34,22 @@ Manifests:
       install: 
         RequiresPrivilege: true
         Timeout: 9000
-        script: |-
+        Script: |-
           chmod 755 {artifacts:path}/install_serial.sh {artifacts:path}/run_serial.sh {artifacts:path}/launch_serial.sh {artifacts:path}/stop.sh {artifacts:path}/parser.sh
-          /bin/bash {artifacts:path}/install_serial.sh {artifacts:path} {configuration:/Parameters/node_version} {configuration:/Parameters/ei_ggc_user_groups}
+          sh {artifacts:path}/install_serial.sh {artifacts:path} {configuration:/Parameters/node_version} {configuration:/Parameters/ei_ggc_user_groups}
       run:
-        script: |- 
-          /bin/bash {artifacts:path}/run_serial.sh {artifacts:path} {configuration:/Parameters/device_name} {configuration:/Parameters/sleep_time_sec} {configuration:/Parameters/lock_filename} {configuration:/Parameters/iotcore_backoff} {configuration:/Parameters/iotcore_qos} {configuration:/Parameters/ei_bindir}
+        Script: |- 
+          sh {artifacts:path}/run_serial.sh {artifacts:path} {configuration:/Parameters/device_name} {configuration:/Parameters/sleep_time_sec} {configuration:/Parameters/lock_filename} {configuration:/Parameters/iotcore_backoff} {configuration:/Parameters/iotcore_qos} {configuration:/Parameters/ei_bindir}
       shutdown:
         RequiresPrivilege: true
-        script: |-
-          /bin/bash {artifacts:path}/stop.sh {artifacts:path} {configuration:/Parameters/lock_filename} 
+        Script: |-
+          sh {artifacts:path}/stop.sh {artifacts:path} {configuration:/Parameters/lock_filename} 
     Artifacts:
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/aws-iotcore-connector.ts
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/aws-iotcore-serial-scraper.ts
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/package.json
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/install_serial.sh
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/run_serial.sh
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/launch_serial.sh
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/stop.sh
-      - URI: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/parser.sh
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/aws-iotcore-connector.ts
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/aws-iotcore-serial-scraper.ts
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/package.json
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/install_serial.sh
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/run_serial.sh
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/launch_serial.sh
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/stop.sh
+      - Uri: s3://YOUR_S3_ARTIFACT_BUCKET/artifacts/EdgeImpulseServiceComponent/1.0.0/parser.sh
