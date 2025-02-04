@@ -31,11 +31,18 @@ fi
 #
 # Rationalize 
 #
-if [ ! -z "${IS_FRDM_BOARD}"] || [ ! -z "${IS_QC_BOARD}" ]; then
-    IS_DEBIAN=""
-    IS_UBUNTU=""
-    APT=""
-    YUM=""
+if [ ! -z "${IS_FRDM_BOARD}"]; then
+    export IS_DEBIAN=""
+    export IS_UBUNTU=""
+    export APT=""
+    export YUM=""
+    export YOCTO="yocto"
+fi
+if [ ! -z "${IS_QC_BOARD}" ]; then
+    export IS_DEBIAN=""
+    export IS_UBUNTU=""
+    export APT=""
+    export YUM=""
     export YOCTO="yocto"
 fi
 
