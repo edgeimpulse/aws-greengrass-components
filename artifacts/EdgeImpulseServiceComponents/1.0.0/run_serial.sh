@@ -48,8 +48,14 @@ fi
 # Binary directory
 #
 BIN_DIR=${EI_BINDIR}
-if [ ! -z "${YOCTO}" ]; then
-    BIN_DIR="/usr/bin"
+if [ "${EI_BINDIR}" = "/usr/local/bin" ]; then
+    # default specified. So check for Yocto and adjust...
+    if [ ! -z "${YOCTO}" ]; then
+        if [ -f /usr/bin/edge-impulse-linux-runner ] ; then
+            # Yocto placed binaries in /usr/bin
+            BIN_DIR="/usr/bin"
+        fi
+    fi
 fi
 
 # Ensure our path is set correctly... 

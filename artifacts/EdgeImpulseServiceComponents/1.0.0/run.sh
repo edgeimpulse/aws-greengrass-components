@@ -40,7 +40,7 @@ EXISTS="2"
 #
 IS_DEBIAN=`uname -v | grep Debian`
 IS_UBUNTU=`uname -v | grep -E '(Ubuntu|RT)'`
-eexport YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip|qc|qli|frdm)'`
+export YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip|qc|qli|frdm)'`
 IS_AVNET_RZBOARD=`uname -a | grep -E '(rzboard)'`
 IS_FRDM_BOARD=`uname -a | grep -E '(frdm)'`
 IS_QC_BOARD=`uname -a | grep -E '(qli)'`
@@ -93,8 +93,10 @@ BIN_DIR=${EI_BINDIR}
 if [ "${EI_BINDIR}" = "/usr/local/bin" ]; then
     # default specified. So check for Yocto and adjust...
     if [ ! -z "${YOCTO}" ]; then
-        # Yocto places binaries in /usr/bin
-        BIN_DIR="/usr/bin"
+        if [ -f /usr/bin/edge-impulse-linux-runner ] ; then
+            # Yocto placed binaries in /usr/bin
+            BIN_DIR="/usr/bin"
+        fi
     fi
 fi
 
