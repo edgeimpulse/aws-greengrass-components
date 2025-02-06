@@ -52,16 +52,19 @@ export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}
 export GG_LITE="NO"
 if [ -f /etc/greengrass/config.d/greengrass-lite.yaml ]; then
     export GG_LITE="YES"
-    export GREENGRASS_SERVICEUSER="gg_component"
-    export GREENGRASS_SERVICEGROUP="gg_component"
-    export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}   
+    export GREENGRASS_SERVICEUSER="ggcore"
+    export GREENGRASS_SERVICEGROUP="ggcore"
+    export TARGET_USER=${GREENGRASS_SERVICEUSER}
+    export TARGET_GROUP=${GREENGRASS_SERVICEGROUP}
+    export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}
+    export TARGET_DIR=${HOME_DIR}
 fi
 
 #
 # Setup env vars for edge-impulse-linux/runner AWS IoTCore Topics and Config
 #
 EI_TOPIC_ROOT="/edgeimpulse/device"
-EI_DEVICE_NAME=`echo $DEVICE_NAME | sed 's/ /_/g' | sed "s/'//g"`
+EI_DEVICE_NAME=`echo $DEVICE_NAME | sed 's/ /_/g' | sed "s/'//g" | sed 's/__none__//g'`
 export EI_OUTPUT_BACKOFF_COUNT=$IOTCORE_BACKOFF
 export EI_IOTCORE_QOS=$IOTCORE_QOS
 export EI_INFERENCE_OUTPUT_TOPIC=${EI_TOPIC_ROOT}"/"${EI_DEVICE_NAME}"/inference/output"

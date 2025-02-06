@@ -73,16 +73,19 @@ export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}
 export GG_LITE="NO"
 if [ -f /etc/greengrass/config.d/greengrass-lite.yaml ]; then
     export GG_LITE="YES"
-    export GREENGRASS_SERVICEUSER="gg_component"
-    export GREENGRASS_SERVICEGROUP="gg_component"
-    export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}   
+    export GREENGRASS_SERVICEUSER="ggcore"
+    export GREENGRASS_SERVICEGROUP="ggcore"
+    export TARGET_USER=${GREENGRASS_SERVICEUSER}
+    export TARGET_GROUP=${GREENGRASS_SERVICEGROUP}
+    export HOME_DIR=/home/${GREENGRASS_SERVICEUSER}
+    export TARGET_DIR=${HOME_DIR}
 fi
 
 # Make our device name and lock file unique for our specific host
-HOSTID=`cat /var/lib/dbus/machine-id`
-if [ ! -z "${HOSTID}" ]; then
-    echo "EI: Customizing launch with hostid: ${HOSTID}..."
-    DEVICE_NAME=${DEVICE_NAME}_${HOSTID}
+MAC_ID=`cat /sys/class/net/$(ip route show default | head -1 | awk '/default/ {print $5}')/address | sed 's/://g'`
+if [ ! -z "${MAC_ID}" ]; then
+    echo "EI: Customizing launch with hostid: ${MAC_ID}..."
+    DEVICE_NAME=${DEVICE_NAME}_${MAC_ID}
     LOCK_FILENAME=${LOCK_FILENAME}_${DEVICE_NAME}
 else
     echo "EI: hostid binary not found. Not customizing with a HOSTID (POTENTIAL DUPLICATION WARNING)"
