@@ -293,15 +293,23 @@ install_deps_yum() {
     yum -y install gstreamer1 gstreamer1-devel gstreamer1-plugins-base gstreamer1-plugins-base-tools gstreamer1-plugins-good
 }
 
+install_deps_yocto() {
+    # Set permissions on GST launch
+    if [ -f /usr/bin/gst-launch-1.0 ]; then
+        chmod u+s /usr/bin/gst-launch-1.0
+    fi
+}
+
 install_deps() {
-    if [ ! -z "${APT}" ]; then
-        echo "On debian-based platform. Installing deps..."
+    if [ ! -z "${YOCTO}" ]; then
+        echo "On Yocto based platform. Installing OS deps..."
+        install_deps_yocto $*
+    elif [ ! -z "${APT}" ]; then
+        echo "On debian-based platform. Installing OS deps..."
         install_deps_debian $*
     elif [ ! -z "${YUM}" ]; then
-        echo "On YUM-based platform. Installing deps..."
+        echo "On YUM-based platform. Installing OS deps..."
         install_deps_yum $*
-    elif [ ! -z "${YOCTO}" ]; then
-        echo "On YOCTO-based platform. Unable to install deps. Attempting continue..."
     else 
         echo "install_deps(): Platform: ${ALL} not supported. No deps installed"
         exit 1
