@@ -27,7 +27,7 @@ ComponentConfiguration:
       "ei_poll_sleeptime_ms": 2500,
       "ei_local_model_file": "__none__",
       "ei_shutdown_behavior": "__none__",
-      "ei_ggc_user_groups": "video audio input users",
+      "ei_ggc_user_groups": "video audio input users system",
       "install_kvssink": "no",
       "publish_inference_base64_image": "no",
       "enable_cache_to_file": "no",
