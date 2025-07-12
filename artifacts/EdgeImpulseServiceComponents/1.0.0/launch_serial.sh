@@ -14,7 +14,7 @@ CMD=$*
 #
 IS_DEBIAN=`uname -v | grep Debian`
 IS_UBUNTU=`uname -v | grep Ubuntu`
-export YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip|qc|qli|frdm)'`
+export YOCTO=`uname -a | grep -E '(yocto|rzboard|linux4microchip|qc|qli|frdm|5.15)'`
 IS_AVNET_RZBOARD=`uname -a | grep -E '(rzboard)'`
 IS_FRDM_BOARD=`uname -a | grep -E '(frdm)'`
 IS_QC_BOARD=`uname -a | grep -E '(qli)'`
