@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Defaults based on: edgeimpulse/bin/firmware/bin/linux/orin.sh
-NODE_VERSION="20.19.3"
+NODE_VERSION="20.16.0"
 LIBVIPS_VERSION="8.12.1"
 NPM_VERSION="10.8.1"
 ARCH=`uname -m`
