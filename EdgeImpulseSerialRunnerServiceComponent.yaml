@@ -11,7 +11,7 @@ ComponentDependencies:
 ComponentConfiguration:
   DefaultConfiguration:
     Parameters: {
-      "node_version": "20.18.2",
+      "node_version": "22.16.0",
       "device_name": "MyEdgeImpulseDevice",
       "sleep_time_sec": 10,
       "lock_filename": "/tmp/ei_lockfile_serial_runner",
