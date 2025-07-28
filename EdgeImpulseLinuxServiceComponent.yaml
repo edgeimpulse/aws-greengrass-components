@@ -11,7 +11,7 @@ ComponentDependencies:
 ComponentConfiguration:
   DefaultConfiguration:
     Parameters: {
-      "node_version": "22.15.1",
+      "node_version": "20.19.3",
       "vips_version": "8.12.1",
       "device_name": "MyEdgeImpulseDevice",
       "launch": "linux",
