@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Defaults based on: edgeimpulse/bin/firmware/bin/linux/orin.sh
 NODE_VERSION="20.16.0"
